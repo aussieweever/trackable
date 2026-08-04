@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AusPost Trackable Simulator</title>
+    <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="topbar" aria-label="Tracking search">
+        <div>
+          <p class="eyebrow">Delivery simulator</p>
+          <h1>AusPost parcel tracking</h1>
+        </div>
+        <form id="tracking-form" class="tracking-form">
+          <label for="tracking-id">Tracking ID</label>
+          <div class="input-row">
+            <input id="tracking-id" name="trackingId" autocomplete="off" value="APD-0004" />
+            <button type="submit">Track</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="toolbar" aria-label="Simulation controls">
+        <button id="restart-button" type="button">Restart route</button>
+        <button id="tick-button" type="button">Advance 1 min</button>
+        <label class="speed-control" for="speed-select">
+          Speed
+          <select id="speed-select">
+            <option value="0.5">0.5x</option>
+            <option value="1" selected>1x</option>
+            <option value="5">5x</option>
+            <option value="10">10x</option>
+            <option value="30">30x</option>
+          </select>
+        </label>
+        <span id="connection-status" class="connection-status">Disconnected</span>
+      </section>
+
+      <section id="alert" class="alert" hidden></section>
+
+      <section class="content-grid">
+        <article class="tracking-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Parcel</p>
+              <h2 id="parcel-title">APD-0004</h2>
+            </div>
+            <span id="status-pill" class="status-pill">Waiting</span>
+          </div>
+
+          <div id="summary-grid" class="summary-grid"></div>
+
+          <div class="map-panel" aria-label="Current area map">
+            <div class="map-caption">
+              <strong>Current area</strong>
+              <span>Approximate suburb-level position</span>
+            </div>
+            <div id="map" class="map-canvas"></div>
+          </div>
+        </article>
+
+        <aside class="side-panel">
+          <section>
+            <div class="panel-header compact">
+              <h2>Fleet</h2>
+              <button id="refresh-button" type="button">Refresh</button>
+            </div>
+            <div id="fleet-list" class="fleet-list"></div>
+          </section>
+
+          <section>
+            <h2>Available IDs</h2>
+            <div id="parcel-list" class="parcel-list"></div>
+          </section>
+        </aside>
+      </section>
+
+      <section class="history-section">
+        <h2>Tracking history</h2>
+        <ol id="history-list" class="history-list"></ol>
+      </section>
+    </main>
+
+    <script src="/vendor/leaflet/leaflet.js"></script>
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>
