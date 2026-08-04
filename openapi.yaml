@@ -1,0 +1,535 @@
+openapi: 3.1.0
+info:
+  title: AusPost Trackable Backend Simulator API
+  version: 1.0.0
+  description: >
+    In-memory AusPost parcel delivery simulator API for frontend development.
+    The service exposes simulator controls, parcel tracking responses, a map tile
+    proxy, and a Server-Sent Events stream for live parcel updates.
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+tags:
+  - name: Health
+  - name: Simulation
+  - name: Parcels
+  - name: Map Tiles
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Check service health
+      operationId: getHealth
+      responses:
+        "200":
+          description: Service is running.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              examples:
+                ok:
+                  value:
+                    status: ok
+
+  /api/simulation:
+    get:
+      tags:
+        - Simulation
+      summary: Get current simulator state
+      operationId: getSimulation
+      responses:
+        "200":
+          description: Current simulator state, including trucks and available parcel IDs.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimulatorState"
+
+  /api/simulation/speed:
+    post:
+      tags:
+        - Simulation
+      summary: Change simulation speed
+      operationId: setSimulationSpeed
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetSpeedRequest"
+            examples:
+              tenTimes:
+                value:
+                  multiplier: 10
+      responses:
+        "200":
+          description: Speed changed successfully. Returns updated simulator state.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimulatorState"
+        "400":
+          description: Invalid speed multiplier.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                invalidMultiplier:
+                  value:
+                    error: Speed multiplier must be a positive number.
+
+  /api/simulation/restart:
+    post:
+      tags:
+        - Simulation
+      summary: Restart the simulation
+      operationId: restartSimulation
+      responses:
+        "200":
+          description: Simulation restarted. Returns reset simulator state.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimulatorState"
+
+  /api/simulation/tick:
+    post:
+      tags:
+        - Simulation
+      summary: Manually advance the simulation
+      operationId: tickSimulation
+      responses:
+        "200":
+          description: Simulation advanced by one route point. Returns updated simulator state.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimulatorState"
+
+  /api/parcels/{trackingId}:
+    get:
+      tags:
+        - Parcels
+      summary: Get parcel tracking details
+      operationId: getParcelTracking
+      parameters:
+        - $ref: "#/components/parameters/TrackingId"
+      responses:
+        "200":
+          description: Parcel tracking data. Active parcels include current location, ETA, and truck details; delivered parcels include deliveredAt.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrackingResponse"
+              examples:
+                active:
+                  value:
+                    trackingId: APD-0004
+                    status: in_transit
+                    currentLocation:
+                      label: Southern Cross
+                      city: Melbourne
+                      lat: -37.8183
+                      lng: 144.9525
+                    estimatedDeliveryWindow:
+                      from: "2026-08-04T11:25:00.000Z"
+                      to: "2026-08-04T12:25:00.000Z"
+                    scheduledDeliveriesBeforeYours: 2
+                    truck:
+                      id: truck-docklands-01
+                      name: Docklands CBD Run
+                      currentRouteIndex: 3
+                      currentLocation:
+                        label: Southern Cross
+                        city: Melbourne
+                        lat: -37.8183
+                        lng: 144.9525
+                      routeLength: 15
+                      parcelCount: 10
+                    history:
+                      - status: loaded
+                        timestamp: "2026-08-04T11:00:00.000Z"
+                        location:
+                          label: Docklands Parcel Facility
+                          city: Docklands
+                          lat: -37.8183
+                          lng: 144.9459
+                        description: Parcel loaded onto Docklands CBD Run.
+                delivered:
+                  value:
+                    trackingId: APD-0004
+                    status: delivered
+                    deliveredAt: "2026-08-04T11:21:00.000Z"
+                    history:
+                      - status: delivered
+                        timestamp: "2026-08-04T11:21:00.000Z"
+                        location:
+                          label: Southern Cross
+                          city: Melbourne
+                          lat: -37.8183
+                          lng: 144.9525
+                        description: Parcel delivered in Melbourne.
+        "404":
+          description: Tracking ID was not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                notFound:
+                  value:
+                    error: Tracking ID not found.
+
+  /api/parcels/{trackingId}/events:
+    get:
+      tags:
+        - Parcels
+      summary: Subscribe to live parcel tracking events
+      operationId: subscribeParcelTrackingEvents
+      description: >
+        Opens a Server-Sent Events stream. The server immediately emits a
+        `tracking` event with the current tracking response, emits additional
+        `tracking` events whenever the parcel state changes or the truck advances,
+        and emits `heartbeat` events roughly every 25 seconds.
+      parameters:
+        - $ref: "#/components/parameters/TrackingId"
+      responses:
+        "200":
+          description: Server-Sent Events stream.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+              examples:
+                stream:
+                  value: |
+                    event: tracking
+                    data: {"trackingId":"APD-0004","status":"in_transit"}
+
+                    event: heartbeat
+                    data: {"timestamp":"2026-08-04T11:00:25.000Z"}
+        "404":
+          description: Tracking ID was not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                notFound:
+                  value:
+                    error: Tracking ID not found.
+
+  /api/map-tiles/{z}/{y}/{x}:
+    get:
+      tags:
+        - Map Tiles
+      summary: Proxy an Esri street map tile
+      operationId: getMapTile
+      parameters:
+        - name: z
+          in: path
+          required: true
+          description: Numeric tile zoom coordinate.
+          schema:
+            type: integer
+            minimum: 0
+        - name: y
+          in: path
+          required: true
+          description: Numeric tile row coordinate.
+          schema:
+            type: integer
+            minimum: 0
+        - name: x
+          in: path
+          required: true
+          description: Numeric tile column coordinate.
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        "200":
+          description: Map tile image. The upstream content type is forwarded, defaulting to image/jpeg.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+              description: Public cache header set to max-age=86400.
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: Tile coordinates were not numeric.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                invalidCoordinates:
+                  value:
+                    error: Invalid tile coordinates.
+        "502":
+          description: Upstream map tile could not be loaded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                tileLoadFailure:
+                  value:
+                    error: Map tile could not be loaded.
+
+components:
+  parameters:
+    TrackingId:
+      name: trackingId
+      in: path
+      required: true
+      description: Parcel tracking ID. Seed data includes APD-0001 to APD-0010 and APR-0001 to APR-0010.
+      schema:
+        type: string
+        pattern: "^AP[DR]-\\d{4}$"
+      examples:
+        docklands:
+          value: APD-0004
+        richmond:
+          value: APR-0004
+
+  schemas:
+    HealthResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          const: ok
+
+    SetSpeedRequest:
+      type: object
+      additionalProperties: true
+      required:
+        - multiplier
+      properties:
+        multiplier:
+          type: number
+          exclusiveMinimum: 0
+          description: >
+            Positive speed multiplier. At 1, one route point takes 60 seconds.
+            At 10, one route point takes 6 seconds. Values below 1 slow the simulation down.
+
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+      properties:
+        error:
+          type: string
+
+    Coordinates:
+      type: object
+      additionalProperties: false
+      required:
+        - lat
+        - lng
+      properties:
+        lat:
+          type: number
+          format: double
+        lng:
+          type: number
+          format: double
+
+    RoutePoint:
+      type: object
+      additionalProperties: false
+      required:
+        - label
+        - city
+        - lat
+        - lng
+      properties:
+        label:
+          type: string
+        city:
+          type: string
+        lat:
+          type: number
+          format: double
+        lng:
+          type: number
+          format: double
+
+    ParcelStatus:
+      type: string
+      enum:
+        - loaded
+        - in_transit
+        - out_for_delivery
+        - delivered
+
+    ActiveParcelStatus:
+      type: string
+      enum:
+        - loaded
+        - in_transit
+        - out_for_delivery
+
+    ParcelEvent:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+        - timestamp
+        - location
+        - description
+      properties:
+        status:
+          $ref: "#/components/schemas/ParcelStatus"
+        timestamp:
+          type: string
+          format: date-time
+        location:
+          $ref: "#/components/schemas/RoutePoint"
+        description:
+          type: string
+
+    TruckSnapshot:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - currentRouteIndex
+        - currentLocation
+        - routeLength
+        - parcelCount
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        currentRouteIndex:
+          type: integer
+          minimum: 0
+        currentLocation:
+          $ref: "#/components/schemas/RoutePoint"
+        routeLength:
+          type: integer
+          minimum: 1
+        parcelCount:
+          type: integer
+          minimum: 0
+
+    SimulatorState:
+      type: object
+      additionalProperties: false
+      required:
+        - startedAt
+        - speedMultiplier
+        - simulatedMinuteMs
+        - trucks
+        - parcelIds
+      properties:
+        startedAt:
+          type: string
+          format: date-time
+        speedMultiplier:
+          type: number
+          exclusiveMinimum: 0
+        simulatedMinuteMs:
+          type: integer
+          minimum: 250
+          description: Milliseconds per simulated minute after applying the speed multiplier.
+        trucks:
+          type: array
+          items:
+            $ref: "#/components/schemas/TruckSnapshot"
+        parcelIds:
+          type: array
+          items:
+            type: string
+
+    EstimatedDeliveryWindow:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - to
+      properties:
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time
+
+    ActiveTrackingResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - trackingId
+        - status
+        - currentLocation
+        - estimatedDeliveryWindow
+        - scheduledDeliveriesBeforeYours
+        - truck
+        - history
+      properties:
+        trackingId:
+          type: string
+        status:
+          $ref: "#/components/schemas/ActiveParcelStatus"
+        currentLocation:
+          $ref: "#/components/schemas/RoutePoint"
+        estimatedDeliveryWindow:
+          $ref: "#/components/schemas/EstimatedDeliveryWindow"
+        scheduledDeliveriesBeforeYours:
+          type: integer
+          minimum: 0
+        truck:
+          $ref: "#/components/schemas/TruckSnapshot"
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/ParcelEvent"
+
+    DeliveredTrackingResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - trackingId
+        - status
+        - deliveredAt
+        - history
+      properties:
+        trackingId:
+          type: string
+        status:
+          type: string
+          const: delivered
+        deliveredAt:
+          type: string
+          format: date-time
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/ParcelEvent"
+
+    TrackingResponse:
+      oneOf:
+        - $ref: "#/components/schemas/ActiveTrackingResponse"
+        - $ref: "#/components/schemas/DeliveredTrackingResponse"
+      discriminator:
+        propertyName: status
