@@ -1,6 +1,6 @@
 # AusPost Trackable Backend Simulator
 
-In-memory Node/TypeScript service that simulates two AusPost trucks delivering 10 parcels each across Melbourne suburbs. Each truck moves one GPS route point every 10 seconds at 1x speed.
+In-memory Node/TypeScript service that simulates two AusPost trucks delivering 10 parcels each across Melbourne suburbs. Each truck follows a route with more than 140 GPS points and moves one GPS route point every 10 seconds at 1x speed.
 
 ## Run
 

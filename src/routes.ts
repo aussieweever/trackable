@@ -1,6 +1,6 @@
 import type { RoutePoint, TruckDefinition } from "./types.js";
 
-const GPS_POINTS_PER_ROUTE_LEG = 3;
+const GPS_POINTS_PER_ROUTE_LEG = 10;
 
 const truckOneWaypoints = [
   { label: "Docklands Parcel Facility", city: "Docklands", lat: -37.8183, lng: 144.9459 },

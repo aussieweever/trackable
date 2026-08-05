@@ -16,7 +16,7 @@ type TruckRuntime = TruckDefinition & {
 
 const BASE_UPDATE_INTERVAL_MS = 10_000;
 const DELIVERY_WINDOW_MS = 60 * 60 * 1000;
-const OUT_FOR_DELIVERY_STEPS = 6;
+const OUT_FOR_DELIVERY_STEPS = 20;
 
 export class DeliverySimulator extends EventEmitter {
   private trucks: TruckRuntime[] = [];
