@@ -47,6 +47,8 @@ export type TruckSnapshot = {
 
 export type ActiveTrackingResponse = {
   trackingId: string;
+  recipient: string;
+  destination: RoutePoint;
   status: "loaded" | "in_transit" | "out_for_delivery";
   currentLocation: RoutePoint;
   estimatedDeliveryWindow: {
@@ -60,6 +62,8 @@ export type ActiveTrackingResponse = {
 
 export type DeliveredTrackingResponse = {
   trackingId: string;
+  recipient: string;
+  destination: RoutePoint;
   status: "delivered";
   deliveredAt: string;
   history: ParcelEvent[];

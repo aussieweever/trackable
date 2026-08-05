@@ -12,7 +12,12 @@
       <section class="topbar" aria-label="Tracking search">
         <div>
           <p class="eyebrow">Delivery simulator</p>
-          <h1>AusPost parcel tracking</h1>
+          <h1>Track your parcel</h1>
+          <div class="tracking-meta">
+            <span class="tracking-label">Tracking ID:</span>
+            <span id="header-tracking-id" class="tracking-chip">APD-0004</span>
+            <span id="connection-status" class="connection-status">Disconnected</span>
+          </div>
         </div>
         <form id="tracking-form" class="tracking-form">
           <label for="tracking-id">Tracking ID</label>
@@ -36,10 +41,23 @@
             <option value="30">30x</option>
           </select>
         </label>
-        <span id="connection-status" class="connection-status">Disconnected</span>
       </section>
 
       <section id="alert" class="alert" hidden></section>
+
+      <section class="delivery-card" aria-label="Delivery details">
+        <h2>Delivery details</h2>
+        <div class="delivery-grid">
+          <div>
+            <p class="delivery-label">Recipient</p>
+            <p id="delivery-recipient" class="delivery-value">-</p>
+          </div>
+          <div>
+            <p class="delivery-label">Address</p>
+            <p id="delivery-address" class="delivery-value">-</p>
+          </div>
+        </div>
+      </section>
 
       <section class="content-grid">
         <article class="tracking-panel">
@@ -53,6 +71,27 @@
 
           <div id="summary-grid" class="summary-grid"></div>
 
+          <section class="detail-cards">
+            <article class="detail-card">
+              <h3>Parcel status</h3>
+              <ol id="status-timeline" class="status-timeline"></ol>
+            </article>
+
+            <article class="detail-card stack">
+              <div>
+                <p class="eyebrow muted">Estimated delivery</p>
+                <p id="eta-large" class="eta-large">-</p>
+              </div>
+              <div>
+                <h3>Current progress</h3>
+                <p id="progress-copy" class="progress-copy">-</p>
+                <div class="progress-track">
+                  <div id="progress-fill" class="progress-fill"></div>
+                </div>
+              </div>
+            </article>
+          </section>
+
           <div class="map-panel" aria-label="Current area map">
             <div class="map-caption">
               <strong>Current GPS position</strong>
@@ -60,6 +99,24 @@
             </div>
             <div id="map" class="map-canvas"></div>
           </div>
+
+          <section class="route-card">
+            <h3>Delivery route information</h3>
+            <div class="route-stats">
+              <div class="route-stat">
+                <strong id="route-completed">0</strong>
+                <span>Deliveries completed</span>
+              </div>
+              <div class="route-stat">
+                <strong id="route-remaining">0</strong>
+                <span>Deliveries remaining</span>
+              </div>
+              <div class="route-stat">
+                <strong id="route-total">0</strong>
+                <span>Total stops</span>
+              </div>
+            </div>
+          </section>
         </article>
 
         <aside class="side-panel">

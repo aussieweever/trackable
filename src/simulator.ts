@@ -91,6 +91,8 @@ export class DeliverySimulator extends EventEmitter {
     if (parcel.status === "delivered") {
       return {
         trackingId: parcel.trackingId,
+        recipient: parcel.recipient,
+        destination: parcel.destination,
         status: "delivered",
         deliveredAt: parcel.deliveredAt ?? parcel.history.at(-1)?.timestamp ?? this.startedAt.toISOString(),
         history: parcel.history
@@ -104,6 +106,8 @@ export class DeliverySimulator extends EventEmitter {
 
     return {
       trackingId: parcel.trackingId,
+      recipient: parcel.recipient,
+      destination: parcel.destination,
       status: parcel.status,
       currentLocation,
       estimatedDeliveryWindow: {
