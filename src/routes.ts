@@ -1,6 +1,8 @@
-import type { TruckDefinition } from "./types.js";
+import type { RoutePoint, TruckDefinition } from "./types.js";
 
-const truckOneRoute = [
+const GPS_POINTS_PER_ROUTE_LEG = 3;
+
+const truckOneWaypoints = [
   { label: "Docklands Parcel Facility", city: "Docklands", lat: -37.8183, lng: 144.9459 },
   { label: "Victoria Harbour", city: "Docklands", lat: -37.8189, lng: 144.9403 },
   { label: "Marvel Stadium", city: "Docklands", lat: -37.8165, lng: 144.9475 },
@@ -18,7 +20,7 @@ const truckOneRoute = [
   { label: "Docklands Return Depot", city: "Docklands", lat: -37.8183, lng: 144.9459 }
 ];
 
-const truckTwoRoute = [
+const truckTwoWaypoints = [
   { label: "Richmond Parcel Facility", city: "Richmond", lat: -37.823, lng: 144.998 },
   { label: "Burnley Station", city: "Richmond", lat: -37.8276, lng: 145.007 },
   { label: "Swan Street", city: "Richmond", lat: -37.8255, lng: 144.9957 },
@@ -36,29 +38,64 @@ const truckTwoRoute = [
   { label: "Richmond Return Depot", city: "Richmond", lat: -37.823, lng: 144.998 }
 ];
 
-const deliveryIndexes = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12];
+const deliveryWaypointIndexes = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12];
+const truckOneRoute = interpolateRoute(truckOneWaypoints);
+const truckTwoRoute = interpolateRoute(truckTwoWaypoints);
+
+function interpolateRoute(waypoints: RoutePoint[]): RoutePoint[] {
+  return waypoints.flatMap((start, index) => {
+    const next = waypoints[index + 1];
+    if (!next) {
+      return [start];
+    }
+
+    return Array.from({ length: GPS_POINTS_PER_ROUTE_LEG }, (_, step) => {
+      if (step === 0) {
+        return start;
+      }
+
+      const ratio = step / GPS_POINTS_PER_ROUTE_LEG;
+      return {
+        label: `En route to ${next.label}`,
+        city: next.city,
+        lat: interpolateCoordinate(start.lat, next.lat, ratio),
+        lng: interpolateCoordinate(start.lng, next.lng, ratio)
+      };
+    });
+  });
+}
+
+function interpolateCoordinate(start: number, end: number, ratio: number) {
+  return Number((start + (end - start) * ratio).toFixed(6));
+}
 
 export const truckDefinitions: TruckDefinition[] = [
   {
     id: "truck-docklands-01",
     name: "Docklands CBD Run",
     route: truckOneRoute,
-    parcels: deliveryIndexes.map((deliveryRouteIndex, index) => ({
-      trackingId: `APD-${String(index + 1).padStart(4, "0")}`,
-      recipient: `CBD recipient ${index + 1}`,
-      destination: truckOneRoute[deliveryRouteIndex],
-      deliveryRouteIndex
-    }))
+    parcels: deliveryWaypointIndexes.map((deliveryWaypointIndex, index) => {
+      const deliveryRouteIndex = deliveryWaypointIndex * GPS_POINTS_PER_ROUTE_LEG;
+      return {
+        trackingId: `APD-${String(index + 1).padStart(4, "0")}`,
+        recipient: `CBD recipient ${index + 1}`,
+        destination: truckOneRoute[deliveryRouteIndex],
+        deliveryRouteIndex
+      };
+    })
   },
   {
     id: "truck-richmond-02",
     name: "Richmond South Run",
     route: truckTwoRoute,
-    parcels: deliveryIndexes.map((deliveryRouteIndex, index) => ({
-      trackingId: `APR-${String(index + 1).padStart(4, "0")}`,
-      recipient: `Richmond recipient ${index + 1}`,
-      destination: truckTwoRoute[deliveryRouteIndex],
-      deliveryRouteIndex
-    }))
+    parcels: deliveryWaypointIndexes.map((deliveryWaypointIndex, index) => {
+      const deliveryRouteIndex = deliveryWaypointIndex * GPS_POINTS_PER_ROUTE_LEG;
+      return {
+        trackingId: `APR-${String(index + 1).padStart(4, "0")}`,
+        recipient: `Richmond recipient ${index + 1}`,
+        destination: truckTwoRoute[deliveryRouteIndex],
+        deliveryRouteIndex
+      };
+    })
   }
 ];

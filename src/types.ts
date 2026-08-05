@@ -70,6 +70,7 @@ export type TrackingResponse = ActiveTrackingResponse | DeliveredTrackingRespons
 export type SimulatorState = {
   startedAt: string;
   speedMultiplier: number;
+  updateIntervalMs: number;
   simulatedMinuteMs: number;
   trucks: TruckSnapshot[];
   parcelIds: string[];

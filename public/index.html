@@ -25,7 +25,7 @@
 
       <section class="toolbar" aria-label="Simulation controls">
         <button id="restart-button" type="button">Restart route</button>
-        <button id="tick-button" type="button">Advance 1 min</button>
+        <button id="tick-button" type="button">Advance GPS point</button>
         <label class="speed-control" for="speed-select">
           Speed
           <select id="speed-select">
@@ -55,8 +55,8 @@
 
           <div class="map-panel" aria-label="Current area map">
             <div class="map-caption">
-              <strong>Current area</strong>
-              <span>Approximate suburb-level position</span>
+              <strong>Current GPS position</strong>
+              <span>Updates every 10 seconds at 1x speed</span>
             </div>
             <div id="map" class="map-canvas"></div>
           </div>

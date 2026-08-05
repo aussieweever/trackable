@@ -232,7 +232,7 @@ function updateAreaMarker(location) {
   }
 
   const latLng = [location.lat, location.lng];
-  const radiusMetres = location.city === "Melbourne" ? 450 : 650;
+  const radiusMetres = 60;
 
   if (!currentAreaMarker) {
     currentAreaMarker = L.circle(latLng, {
@@ -247,8 +247,8 @@ function updateAreaMarker(location) {
     currentAreaMarker.setRadius(radiusMetres);
   }
 
-  currentAreaMarker.bindPopup(`${escapeHtml(location.city)} area`);
-  map.setView(latLng, 14, { animate: true });
+  currentAreaMarker.bindPopup(`${escapeHtml(location.label)}, ${escapeHtml(location.city)}`);
+  map.setView(latLng, 16, { animate: true });
   setTimeout(() => map.invalidateSize(), 0);
 }
 

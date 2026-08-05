@@ -14,8 +14,9 @@ type TruckRuntime = TruckDefinition & {
   currentRouteIndex: number;
 };
 
-const BASE_SIMULATED_MINUTE_MS = 60_000;
+const BASE_UPDATE_INTERVAL_MS = 10_000;
 const DELIVERY_WINDOW_MS = 60 * 60 * 1000;
+const OUT_FOR_DELIVERY_STEPS = 6;
 
 export class DeliverySimulator extends EventEmitter {
   private trucks: TruckRuntime[] = [];
@@ -74,6 +75,7 @@ export class DeliverySimulator extends EventEmitter {
     return {
       startedAt: this.startedAt.toISOString(),
       speedMultiplier: this.speedMultiplier,
+      updateIntervalMs: this.getTickMs(),
       simulatedMinuteMs: this.getTickMs(),
       trucks: this.trucks.map((truck) => this.snapshotTruck(truck)),
       parcelIds: [...this.parcels.keys()]
@@ -141,7 +143,7 @@ export class DeliverySimulator extends EventEmitter {
         continue;
       }
 
-      const nextStatus = truck.currentRouteIndex >= Math.max(parcel.deliveryRouteIndex - 2, 1)
+      const nextStatus = truck.currentRouteIndex >= Math.max(parcel.deliveryRouteIndex - OUT_FOR_DELIVERY_STEPS, 1)
         ? "out_for_delivery"
         : "in_transit";
 
@@ -224,6 +226,6 @@ export class DeliverySimulator extends EventEmitter {
   }
 
   private getTickMs() {
-    return Math.max(250, Math.round(BASE_SIMULATED_MINUTE_MS / this.speedMultiplier));
+    return Math.max(250, Math.round(BASE_UPDATE_INTERVAL_MS / this.speedMultiplier));
   }
 }

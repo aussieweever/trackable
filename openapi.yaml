@@ -325,8 +325,8 @@ components:
           type: number
           exclusiveMinimum: 0
           description: >
-            Positive speed multiplier. At 1, one route point takes 60 seconds.
-            At 10, one route point takes 6 seconds. Values below 1 slow the simulation down.
+            Positive speed multiplier. At 1, one GPS route point takes 10 seconds.
+            At 10, one GPS route point takes 1 second. Values below 1 slow the simulation down.
 
     ErrorResponse:
       type: object
@@ -438,6 +438,7 @@ components:
       required:
         - startedAt
         - speedMultiplier
+        - updateIntervalMs
         - simulatedMinuteMs
         - trucks
         - parcelIds
@@ -448,10 +449,15 @@ components:
         speedMultiplier:
           type: number
           exclusiveMinimum: 0
+        updateIntervalMs:
+          type: integer
+          minimum: 250
+          description: Milliseconds between GPS route point updates after applying the speed multiplier.
         simulatedMinuteMs:
           type: integer
           minimum: 250
-          description: Milliseconds per simulated minute after applying the speed multiplier.
+          deprecated: true
+          description: Deprecated alias of updateIntervalMs, kept for API compatibility.
         trucks:
           type: array
           items:

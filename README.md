@@ -1,6 +1,6 @@
 # AusPost Trackable Backend Simulator
 
-In-memory Node/TypeScript service that simulates two AusPost trucks delivering 10 parcels each across Melbourne suburbs. Each truck moves one GPS route point per simulated minute.
+In-memory Node/TypeScript service that simulates two AusPost trucks delivering 10 parcels each across Melbourne suburbs. Each truck moves one GPS route point every 10 seconds at 1x speed.
 
 ## Run
 
@@ -17,7 +17,7 @@ Open the UI at:
 http://localhost:3000
 ```
 
-The UI lets you enter a tracking ID, subscribe to live SSE tracking updates, restart the route, manually advance the simulation by one minute, and change the simulation speed. It also loads a local Leaflet map and proxies Esri street-map tiles through the backend, then shows the truck's current area with a large blue approximate marker.
+The UI lets you enter a tracking ID, subscribe to live SSE tracking updates, restart the route, manually advance the simulation by one GPS point, and change the simulation speed. It also loads a local Leaflet map and proxies Esri street-map tiles through the backend, then shows the truck's current GPS position with a small blue marker.
 
 ## Tracking IDs
 
@@ -43,7 +43,7 @@ Changes the simulated speed.
 { "multiplier": 10 }
 ```
 
-At `1`, one route point takes 60 seconds. At `10`, one route point takes 6 seconds. Values below `1` slow the simulation down.
+At `1`, one route point takes 10 seconds. At `10`, one route point takes 1 second. Values below `1` slow the simulation down.
 
 `POST /api/simulation/restart`
 
