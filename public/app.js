@@ -262,6 +262,10 @@ function hideAlert() {
 }
 
 function formatStatus(status) {
+  if (status === "out_for_delivery") {
+    return "On its way to you";
+  }
+
   return status.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 

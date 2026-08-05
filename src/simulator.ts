@@ -155,7 +155,7 @@ export class DeliverySimulator extends EventEmitter {
             now,
             truck.route[truck.currentRouteIndex],
             nextStatus === "out_for_delivery"
-              ? "Parcel is nearby and out for delivery."
+              ? "Your parcel is on its way to you."
               : `Parcel is moving through ${truck.route[truck.currentRouteIndex].city}.`
           )
         );
