@@ -26,7 +26,7 @@ app.get("/api/map-tiles/:z/:y/:x", async (req, res) => {
     return;
   }
 
-  const tileUrl = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/${z}/${y}/${x}`;
+  const tileUrl = `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
 
   try {
     const tileResponse = await fetch(tileUrl, {
@@ -41,7 +41,7 @@ app.get("/api/map-tiles/:z/:y/:x", async (req, res) => {
     }
 
     res.setHeader("Cache-Control", "public, max-age=86400");
-    res.setHeader("Content-Type", tileResponse.headers.get("content-type") ?? "image/jpeg");
+    res.setHeader("Content-Type", tileResponse.headers.get("content-type") ?? "image/png");
     res.send(Buffer.from(await tileResponse.arrayBuffer()));
   } catch {
     res.status(502).json({ error: "Map tile could not be loaded." });

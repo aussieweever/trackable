@@ -214,7 +214,7 @@ function initMap() {
 
   L.control.attribution({
     prefix: false
-  }).addAttribution("Tiles &copy; Esri").addTo(map);
+  }).addAttribution("&copy; OpenStreetMap contributors").addTo(map);
 
   setTimeout(() => map.invalidateSize(), 0);
 }

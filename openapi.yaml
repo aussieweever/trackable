@@ -147,7 +147,7 @@ paths:
                         city: Melbourne
                         lat: -37.8183
                         lng: 144.9525
-                      routeLength: 15
+                      routeLength: 1728
                       parcelCount: 10
                     history:
                       - status: loaded
@@ -226,7 +226,7 @@ paths:
     get:
       tags:
         - Map Tiles
-      summary: Proxy an Esri street map tile
+      summary: Proxy an OpenStreetMap street map tile
       operationId: getMapTile
       parameters:
         - name: z
@@ -252,7 +252,7 @@ paths:
             minimum: 0
       responses:
         "200":
-          description: Map tile image. The upstream content type is forwarded, defaulting to image/jpeg.
+          description: Map tile image. The upstream content type is forwarded, defaulting to image/png.
           headers:
             Cache-Control:
               schema:
