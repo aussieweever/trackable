@@ -133,51 +133,59 @@ export class DeliverySimulator extends EventEmitter {
   }
 
   getTracking(trackingId: string): TrackingResponse | undefined {
-    const parcel = this.parcels.get(trackingId);
-    if (!parcel) {
-      return undefined;
-    }
+     const parcel = this.parcels.get(trackingId);
+     if (!parcel) {
+       return undefined;
+     }
 
-    const truck = this.requireTruck(parcel.truckId);
-    const deliveryStopNumber = this.getDeliveryStopNumber(parcel, truck);
-    const deliveryTotalStops = truck.parcels.length;
+     const truck = this.requireTruck(parcel.truckId);
+     const deliveryStopNumber = this.getDeliveryStopNumber(parcel, truck);
+     const deliveryTotalStops = truck.parcels.length;
 
-    if (parcel.status === "delivered") {
-      return {
-        trackingId: parcel.trackingId,
-        recipient: parcel.recipient,
-        destination: parcel.destination,
-        status: "delivered",
-        deliveredAt: parcel.deliveredAt ?? parcel.history.at(-1)?.timestamp ?? this.startedAt.toISOString(),
-        deliveryStopNumber,
-        deliveryTotalStops,
-        history: parcel.history,
-        ble: parcel.ble
-      };
-    }
+     const truckParcels = truck.parcels.map((p, index) => ({
+       trackingId: p.trackingId,
+       destination: { lat: p.destination.lat, lng: p.destination.lng },
+       deliveryStopNumber: index + 1
+     }));
 
-    const currentLocation = truck.route[truck.currentRouteIndex];
-    const remainingRouteSteps = Math.max(parcel.deliveryRouteIndex - truck.currentRouteIndex, 0);
-    const etaFrom = new Date(Date.now() + remainingRouteSteps * this.getTickMs());
+     if (parcel.status === "delivered") {
+       return {
+         trackingId: parcel.trackingId,
+         recipient: parcel.recipient,
+         destination: parcel.destination,
+         status: "delivered",
+         deliveredAt: parcel.deliveredAt ?? parcel.history.at(-1)?.timestamp ?? this.startedAt.toISOString(),
+         deliveryStopNumber,
+         deliveryTotalStops,
+         truckParcels,
+         history: parcel.history,
+         ble: parcel.ble
+       };
+     }
 
-    return {
-      trackingId: parcel.trackingId,
-      recipient: parcel.recipient,
-      destination: parcel.destination,
-      status: parcel.status,
-      currentLocation,
-      estimatedDeliveryWindow: {
-        from: etaFrom.toISOString(),
-        to: new Date(etaFrom.getTime() + DELIVERY_WINDOW_MS).toISOString()
-      },
-      scheduledDeliveriesBeforeYours: this.countPendingDeliveriesBefore(parcel, truck),
-      deliveryStopNumber,
-      deliveryTotalStops,
-      truck: this.snapshotTruck(truck),
-      history: parcel.history,
-      ble: parcel.ble
-    };
-  }
+     const currentLocation = truck.route[truck.currentRouteIndex];
+     const remainingRouteSteps = Math.max(parcel.deliveryRouteIndex - truck.currentRouteIndex, 0);
+     const etaFrom = new Date(Date.now() + remainingRouteSteps * this.getTickMs());
+
+     return {
+       trackingId: parcel.trackingId,
+       recipient: parcel.recipient,
+       destination: parcel.destination,
+       status: parcel.status,
+       currentLocation,
+       estimatedDeliveryWindow: {
+         from: etaFrom.toISOString(),
+         to: new Date(etaFrom.getTime() + DELIVERY_WINDOW_MS).toISOString()
+       },
+       scheduledDeliveriesBeforeYours: this.countPendingDeliveriesBefore(parcel, truck),
+       deliveryStopNumber,
+       deliveryTotalStops,
+       truck: this.snapshotTruck(truck),
+       truckParcels,
+       history: parcel.history,
+       ble: parcel.ble
+     };
+   }
 
   tick() {
     for (const truck of this.trucks) {

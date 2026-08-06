@@ -40,6 +40,8 @@ const restartButton = document.querySelector("#restart-button");
 const tickButton = document.querySelector("#tick-button");
 const refreshButton = document.querySelector("#refresh-button");
 const connectionStatus = document.querySelector("#connection-status");
+const privacyModeToggle = document.querySelector("#privacy-mode-toggle");
+const mapCanvas = document.querySelector("#map");
 let bleEventsCache = [];
 let selectedBleTagId = null;
 
@@ -49,6 +51,8 @@ let map;
 let currentAreaMarker;
 let initialDeliveriesBeforeYours = null;
 let bleEventsFilterValue = "";
+let privacyModeEnabled = false;
+let currentTrackingData = null;
 
 initMap();
 
@@ -57,9 +61,11 @@ form.addEventListener("submit", (event) => {
   track(trackingInput.value);
 });
 
-speedSelect.addEventListener("change", async () => {
-  await postJson("/api/simulation/speed", { multiplier: Number(speedSelect.value) });
-  await loadSimulation();
+privacyModeToggle.addEventListener("change", () => {
+  privacyModeEnabled = privacyModeToggle.checked;
+  if (currentTrackingData) {
+    updateMapVisibility(currentTrackingData);
+  }
 });
 
 restartButton.addEventListener("click", async () => {
@@ -123,6 +129,99 @@ function subscribe(trackingId) {
   });
 }
 
+// -- Privacy mode & map visibility helpers --
+function calculateDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371e3; // Earth's radius in meters
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function findProximityClusters(parcels, threshold = 100) {
+  if (parcels.length === 0) return [];
+  
+  const clusters = [];
+  const visited = new Set();
+  
+  for (const parcel of parcels) {
+    if (visited.has(parcel.trackingId)) continue;
+    
+    const cluster = [parcel];
+    visited.add(parcel.trackingId);
+    
+    for (const other of parcels) {
+      if (visited.has(other.trackingId)) continue;
+      const distance = calculateDistance(
+        parcel.destination.lat, parcel.destination.lng,
+        other.destination.lat, other.destination.lng
+      );
+      if (distance <= threshold) {
+        cluster.push(other);
+        visited.add(other.trackingId);
+      }
+    }
+    
+    clusters.push(cluster);
+  }
+  
+  return clusters;
+}
+
+function calculateRevealDistance(trackingData) {
+  const parcels = trackingData.truckParcels || [];
+  if (parcels.length === 0) return 2;
+  
+  const clusters = findProximityClusters(parcels);
+  const currentDeliveryStop = trackingData.deliveryStopNumber;
+  
+  // Find the cluster containing the current delivery
+  for (const cluster of clusters) {
+    const hasCurrentDelivery = cluster.some(p => p.deliveryStopNumber === currentDeliveryStop);
+    if (hasCurrentDelivery) {
+      if (cluster.length >= 5) {
+        // 5 or more deliveries to same location: reveal 2 stops before
+        return 2;
+      } else if (cluster.length > 1) {
+        // Multiple deliveries within 100m: reveal 3 stops before
+        return 3;
+      }
+    }
+  }
+  
+  // Default: reveal 2 stops before
+  return 2;
+}
+
+function shouldShowMapTracking(trackingData) {
+  if (!privacyModeEnabled) return true;
+  if (trackingData.status === "delivered") return true;
+  
+  const revealDistance = calculateRevealDistance(trackingData);
+  const stopsBeforeDelivery = trackingData.scheduledDeliveriesBeforeYours || 0;
+  
+  return stopsBeforeDelivery <= revealDistance;
+}
+
+function updateMapVisibility(trackingData) {
+  const shouldShow = shouldShowMapTracking(trackingData);
+  
+  if (mapCanvas) {
+    if (shouldShow) {
+      mapCanvas.classList.remove("map-canvas-hidden");
+      mapCanvas.classList.add("map-canvas-visible");
+      if (map) map.invalidateSize();
+    } else {
+      mapCanvas.classList.remove("map-canvas-visible");
+      mapCanvas.classList.add("map-canvas-hidden");
+    }
+  }
+}
+
 async function loadSimulation() {
   const response = await fetch("/api/simulation");
   const data = await response.json();
@@ -133,6 +232,7 @@ async function loadSimulation() {
 }
 
 function renderTracking(data) {
+  currentTrackingData = data;
   headerTrackingId.textContent = data.trackingId;
   parcelTitle.textContent = data.trackingId;
   statusPill.textContent = formatStatus(data.status);
@@ -203,6 +303,7 @@ function renderTracking(data) {
   renderHistory(data.history);
   renderBle(data.ble);
   setMapArrivingSoon(arrivingSoonActive);
+  updateMapVisibility(data);
 }
 
 function renderBle(ble) {
@@ -558,9 +659,9 @@ function renderStatusTimeline(status, arrivingSoon) {
 }
 
 function setMapArrivingSoon(arrivingSoon) {
-  const mapCanvas = document.querySelector('#map');
-  if (!mapCanvas) return;
-  mapCanvas.classList.toggle('arriving-soon', Boolean(arrivingSoon));
+  const mapCanvasEl = document.querySelector('#map');
+  if (!mapCanvasEl) return;
+  mapCanvasEl.classList.toggle('arriving-soon', Boolean(arrivingSoon));
 }
 
 function renderRouteStats({ beforeYours, deliveryStopNumber, delivered }) {

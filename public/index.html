@@ -94,13 +94,19 @@
             </article>
           </section>
 
-          <div class="map-panel" aria-label="Current area map">
-            <div class="map-caption">
-              <strong>Current GPS position</strong>
-              <span>Updates every 10 seconds at 1x speed</span>
-            </div>
-            <div id="map" class="map-canvas"></div>
-          </div>
+           <div class="map-panel" aria-label="Current area map">
+             <div class="map-caption">
+               <div>
+                 <strong>Current GPS position</strong>
+                 <span>Updates every 10 seconds at 1x speed</span>
+               </div>
+               <label class="privacy-toggle-label">
+                 <input id="privacy-mode-toggle" type="checkbox" class="privacy-toggle-input" />
+                 <span class="privacy-toggle-text">Privacy mode</span>
+               </label>
+             </div>
+             <div id="map" class="map-canvas map-canvas-visible"></div>
+           </div>
 
           <section class="route-card">
             <h3>Delivery route information</h3>

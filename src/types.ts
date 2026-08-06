@@ -63,6 +63,12 @@ export type TruckSnapshot = {
   parcelCount: number;
 };
 
+export type TruckParcelInfo = {
+  trackingId: string;
+  destination: Coordinates;
+  deliveryStopNumber: number;
+};
+
 export type ActiveTrackingResponse = {
   trackingId: string;
   recipient: string;
@@ -77,6 +83,7 @@ export type ActiveTrackingResponse = {
   deliveryStopNumber: number;
   deliveryTotalStops: number;
   truck: TruckSnapshot;
+  truckParcels: TruckParcelInfo[];
   history: ParcelEvent[];
   ble?: BLEEvent;
 };
@@ -89,6 +96,7 @@ export type DeliveredTrackingResponse = {
   deliveredAt: string;
   deliveryStopNumber: number;
   deliveryTotalStops: number;
+  truckParcels: TruckParcelInfo[];
   history: ParcelEvent[];
   ble?: BLEEvent;
 };
