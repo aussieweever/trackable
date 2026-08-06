@@ -138,6 +138,10 @@ export class DeliverySimulator extends EventEmitter {
       return undefined;
     }
 
+    const truck = this.requireTruck(parcel.truckId);
+    const deliveryStopNumber = this.getDeliveryStopNumber(parcel, truck);
+    const deliveryTotalStops = truck.parcels.length;
+
     if (parcel.status === "delivered") {
       return {
         trackingId: parcel.trackingId,
@@ -145,12 +149,13 @@ export class DeliverySimulator extends EventEmitter {
         destination: parcel.destination,
         status: "delivered",
         deliveredAt: parcel.deliveredAt ?? parcel.history.at(-1)?.timestamp ?? this.startedAt.toISOString(),
+        deliveryStopNumber,
+        deliveryTotalStops,
         history: parcel.history,
         ble: parcel.ble
       };
     }
 
-    const truck = this.requireTruck(parcel.truckId);
     const currentLocation = truck.route[truck.currentRouteIndex];
     const remainingRouteSteps = Math.max(parcel.deliveryRouteIndex - truck.currentRouteIndex, 0);
     const etaFrom = new Date(Date.now() + remainingRouteSteps * this.getTickMs());
@@ -166,6 +171,8 @@ export class DeliverySimulator extends EventEmitter {
         to: new Date(etaFrom.getTime() + DELIVERY_WINDOW_MS).toISOString()
       },
       scheduledDeliveriesBeforeYours: this.countPendingDeliveriesBefore(parcel, truck),
+      deliveryStopNumber,
+      deliveryTotalStops,
       truck: this.snapshotTruck(truck),
       history: parcel.history,
       ble: parcel.ble
@@ -240,6 +247,17 @@ export class DeliverySimulator extends EventEmitter {
       routeLength: truck.route.length,
       parcelCount: truck.parcels.length
     };
+  }
+
+  private getDeliveryStopNumber(parcel: ParcelRuntime, truck: TruckRuntime) {
+    const orderedStops = [...truck.parcels].sort((a, b) => {
+      if (a.deliveryRouteIndex !== b.deliveryRouteIndex) {
+        return a.deliveryRouteIndex - b.deliveryRouteIndex;
+      }
+      return a.trackingId.localeCompare(b.trackingId);
+    });
+    const index = orderedStops.findIndex((candidate) => candidate.trackingId === parcel.trackingId);
+    return index >= 0 ? index + 1 : 1;
   }
 
   private createEvent(

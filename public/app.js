@@ -147,6 +147,12 @@ function renderTracking(data) {
     initialDeliveriesBeforeYours = data.scheduledDeliveriesBeforeYours;
   }
 
+  const arrivingSoonActive = data.status === "delivered"
+    ? true
+    : Number.isFinite(data.scheduledDeliveriesBeforeYours)
+      ? data.scheduledDeliveriesBeforeYours === 0
+      : false;
+
   if (data.status === "delivered") {
     summaryGrid.innerHTML = [
       summaryItem("Status", "Delivered"),
@@ -157,7 +163,11 @@ function renderTracking(data) {
     etaLarge.textContent = "Delivered";
     progressCopy.textContent = "Parcel delivered";
     progressFill.style.width = "100%";
-    renderRouteStats(-1, initialDeliveriesBeforeYours ?? 0);
+    renderRouteStats({
+      beforeYours: 0,
+      deliveryStopNumber: data.deliveryStopNumber,
+      delivered: true
+    });
     updateMapFromHistory(data.history);
   } else {
     summaryGrid.innerHTML = [
@@ -181,14 +191,18 @@ function renderTracking(data) {
       : Math.max(0, Math.min(100, ((baseline - beforeYours) / baseline) * 100));
     progressFill.style.width = `${progressPercent.toFixed(0)}%`;
 
-    renderRouteStats(beforeYours, baseline);
+    renderRouteStats({
+      beforeYours,
+      deliveryStopNumber: data.deliveryStopNumber,
+      delivered: false
+    });
     updateAreaMarker(data.currentLocation);
   }
 
-  renderStatusTimeline(data.status, Boolean(data.arrivingSoon));
+  renderStatusTimeline(data.status, arrivingSoonActive);
   renderHistory(data.history);
   renderBle(data.ble);
-  setMapArrivingSoon(Boolean(data.arrivingSoon));
+  setMapArrivingSoon(arrivingSoonActive);
 }
 
 function renderBle(ble) {
@@ -548,16 +562,18 @@ function setMapArrivingSoon(arrivingSoon) {
   mapCanvas.classList.toggle('arriving-soon', Boolean(arrivingSoon));
 }
 
-function renderRouteStats(beforeYours, baseline) {
-  // Show progress relative to this parcel's journey: start at 0 completed on first load.
-  const startBeforeYours = Math.max(0, Number.isFinite(baseline) ? baseline : beforeYours);
-  const derivedTotal = Math.max(startBeforeYours + 1, 1);
-  const remaining = Math.max(0, Math.min(derivedTotal, beforeYours + 1));
-  const completed = Math.max(0, Math.min(derivedTotal, startBeforeYours - beforeYours));
+function renderRouteStats({ beforeYours, deliveryStopNumber, delivered }) {
+  const total = Math.max(1, Number.isFinite(deliveryStopNumber) ? Number(deliveryStopNumber) : 1);
+  const remaining = delivered
+    ? 0
+    : Math.max(0, Math.min(total, (Number.isFinite(beforeYours) ? Number(beforeYours) : 0) + 1));
+  const completed = delivered
+    ? total
+    : Math.max(0, total - remaining);
 
   routeCompleted.textContent = String(completed);
   routeRemaining.textContent = String(remaining);
-  routeTotal.textContent = String(derivedTotal);
+  routeTotal.textContent = String(total);
 }
 
 function renderFleet(trucks) {

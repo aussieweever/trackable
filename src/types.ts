@@ -74,6 +74,8 @@ export type ActiveTrackingResponse = {
     to: string;
   };
   scheduledDeliveriesBeforeYours: number;
+  deliveryStopNumber: number;
+  deliveryTotalStops: number;
   truck: TruckSnapshot;
   history: ParcelEvent[];
   ble?: BLEEvent;
@@ -85,6 +87,8 @@ export type DeliveredTrackingResponse = {
   destination: RoutePoint;
   status: "delivered";
   deliveredAt: string;
+  deliveryStopNumber: number;
+  deliveryTotalStops: number;
   history: ParcelEvent[];
   ble?: BLEEvent;
 };
