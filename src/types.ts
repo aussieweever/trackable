@@ -23,10 +23,26 @@ export type TruckDefinition = {
 };
 
 export type ParcelEvent = {
-  status: "loaded" | "in_transit" | "out_for_delivery" | "delivered";
+  status: "loaded" | "in_transit" | "out_for_delivery" | "arriving_soon" | "delivered";
   timestamp: string;
   location: RoutePoint;
   description: string;
+};
+
+export type BLEEvent = {
+  tagId: string;
+  timestamp?: string;
+  rssi?: number;
+  battery?: number;
+  sensors?: Record<string, any>;
+  macAddress?: string;
+  gps?: {
+    lat: number;
+    lng: number;
+    label?: string;
+    city?: string;
+  };
+  raw?: unknown;
 };
 
 export type ParcelRuntime = ParcelDefinition & {
@@ -34,6 +50,8 @@ export type ParcelRuntime = ParcelDefinition & {
   status: "loaded" | "in_transit" | "out_for_delivery" | "delivered";
   deliveredAt?: string;
   history: ParcelEvent[];
+  // optional BLE device data attached at runtime
+  ble?: BLEEvent;
 };
 
 export type TruckSnapshot = {
@@ -45,8 +63,16 @@ export type TruckSnapshot = {
   parcelCount: number;
 };
 
+export type TruckParcelInfo = {
+  trackingId: string;
+  destination: Coordinates;
+  deliveryStopNumber: number;
+};
+
 export type ActiveTrackingResponse = {
   trackingId: string;
+  recipient: string;
+  destination: RoutePoint;
   status: "loaded" | "in_transit" | "out_for_delivery";
   currentLocation: RoutePoint;
   estimatedDeliveryWindow: {
@@ -54,15 +80,25 @@ export type ActiveTrackingResponse = {
     to: string;
   };
   scheduledDeliveriesBeforeYours: number;
+  deliveryStopNumber: number;
+  deliveryTotalStops: number;
   truck: TruckSnapshot;
+  truckParcels: TruckParcelInfo[];
   history: ParcelEvent[];
+  ble?: BLEEvent;
 };
 
 export type DeliveredTrackingResponse = {
   trackingId: string;
+  recipient: string;
+  destination: RoutePoint;
   status: "delivered";
   deliveredAt: string;
+  deliveryStopNumber: number;
+  deliveryTotalStops: number;
+  truckParcels: TruckParcelInfo[];
   history: ParcelEvent[];
+  ble?: BLEEvent;
 };
 
 export type TrackingResponse = ActiveTrackingResponse | DeliveredTrackingResponse;

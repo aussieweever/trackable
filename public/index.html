@@ -12,7 +12,12 @@
       <section class="topbar" aria-label="Tracking search">
         <div>
           <p class="eyebrow">Delivery simulator</p>
-          <h1>AusPost parcel tracking</h1>
+          <h1>Track your parcel</h1>
+          <div class="tracking-meta">
+            <span class="tracking-label">Tracking ID:</span>
+            <span id="header-tracking-id" class="tracking-chip">APD-0004</span>
+            <span id="connection-status" class="connection-status">Disconnected</span>
+          </div>
         </div>
         <form id="tracking-form" class="tracking-form">
           <label for="tracking-id">Tracking ID</label>
@@ -33,13 +38,28 @@
             <option value="1" selected>1x</option>
             <option value="5">5x</option>
             <option value="10">10x</option>
+            <option value="15">15x</option>
+            <option value="20">20x</option>
             <option value="30">30x</option>
           </select>
         </label>
-        <span id="connection-status" class="connection-status">Disconnected</span>
       </section>
 
       <section id="alert" class="alert" hidden></section>
+
+      <section class="delivery-card" aria-label="Delivery details">
+        <h2>Delivery details</h2>
+        <div class="delivery-grid">
+          <div>
+            <p class="delivery-label">Recipient</p>
+            <p id="delivery-recipient" class="delivery-value">-</p>
+          </div>
+          <div>
+            <p class="delivery-label">Address</p>
+            <p id="delivery-address" class="delivery-value">-</p>
+          </div>
+        </div>
+      </section>
 
       <section class="content-grid">
         <article class="tracking-panel">
@@ -53,13 +73,58 @@
 
           <div id="summary-grid" class="summary-grid"></div>
 
-          <div class="map-panel" aria-label="Current area map">
-            <div class="map-caption">
-              <strong>Current GPS position</strong>
-              <span>Updates every 10 seconds at 1x speed</span>
+          <section class="detail-cards">
+            <article class="detail-card">
+              <h3>Parcel status</h3>
+              <ol id="status-timeline" class="status-timeline"></ol>
+            </article>
+
+            <article class="detail-card stack">
+              <div>
+                <p class="eyebrow muted">Estimated delivery</p>
+                <p id="eta-large" class="eta-large">-</p>
+              </div>
+              <div>
+                <h3>Current progress</h3>
+                <p id="progress-copy" class="progress-copy">-</p>
+                <div class="progress-track">
+                  <div id="progress-fill" class="progress-fill"></div>
+                </div>
+              </div>
+            </article>
+          </section>
+
+           <div class="map-panel" aria-label="Current area map">
+             <div class="map-caption">
+               <div>
+                 <strong>Current GPS position</strong>
+                 <span>Updates every 10 seconds at 1x speed</span>
+               </div>
+               <label class="privacy-toggle-label">
+                 <input id="privacy-mode-toggle" type="checkbox" class="privacy-toggle-input" />
+                 <span class="privacy-toggle-text">Privacy mode</span>
+               </label>
+             </div>
+             <div id="map" class="map-canvas"></div>
+           </div>
+
+          <section class="route-card">
+            <h3>Delivery route information</h3>
+            <div class="route-stats">
+              <div class="route-stat">
+                <strong id="route-completed">0</strong>
+                <span>Stops completed before yours</span>
+              </div>
+              <div class="route-stat">
+                <strong id="route-remaining">0</strong>
+                <span>Stops remaining incl. yours</span>
+              </div>
+              <div class="route-stat">
+                <strong id="route-total">0</strong>
+                <span>Your stop number on route</span>
+              </div>
             </div>
-            <div id="map" class="map-canvas"></div>
-          </div>
+          </section>
         </article>
 
         <aside class="side-panel">
@@ -72,9 +137,79 @@
           </section>
 
           <section>
-            <h2>Available IDs</h2>
+            <h2>Tracking IDs</h2>
             <div id="parcel-list" class="parcel-list"></div>
           </section>
+
+              <section>
+                <h2>BLE Monitor</h2>
+                <div id="ble-panel" class="ble-panel">No BLE data</div>
+              </section>
+
+              <section>
+                <h2>BLE mappings</h2>
+                <form id="ble-map-form" class="ble-form">
+                  <div class="ble-form-row">
+                    <label for="map-tag">Tag ID</label>
+                    <input id="map-tag" name="tagId" placeholder="e.g. TAG-1234" />
+                  </div>
+                  <div class="ble-form-row">
+                    <label for="map-mac">MAC address</label>
+                    <input id="map-mac" name="macAddress" placeholder="e.g. AA:BB:CC:DD:EE:FF" />
+                  </div>
+                  <div class="ble-form-row">
+                    <label for="map-tracking">Tracking ID</label>
+                    <input id="map-tracking" name="trackingId" placeholder="e.g. APD-0004" />
+                  </div>
+                  <div class="ble-form-actions">
+                    <button type="submit">Add / Update mapping</button>
+                    <button id="ble-map-refresh" type="button">Refresh</button>
+                  </div>
+                </form>
+
+                <div id="mapping-list" class="mapping-list"></div>
+              </section>
+
+              <section>
+                <h2>Simulate BLE event</h2>
+                <form id="ble-sim-form" class="ble-form">
+                  <div class="ble-form-row">
+                    <label for="sim-tag">Tag ID</label>
+                    <input id="sim-tag" name="tagId" placeholder="e.g. TAG-1234" />
+                  </div>
+                  <div class="ble-form-row">
+                    <label for="sim-mac">MAC address</label>
+                    <input id="sim-mac" name="macAddress" placeholder="e.g. AA:BB:CC:DD:EE:FF" />
+                  </div>
+                  <div class="ble-form-row">
+                    <label for="sim-rssi">RSSI</label>
+                    <input id="sim-rssi" name="rssi" placeholder="e.g. -60" />
+                  </div>
+                  <div class="ble-form-row">
+                    <label for="sim-batt">Battery %</label>
+                    <input id="sim-batt" name="battery" placeholder="e.g. 86" />
+                  </div>
+                  <div class="ble-form-row">
+                    <label for="sim-tracking">Attach to Tracking ID (optional)</label>
+                    <input id="sim-tracking" name="trackingId" placeholder="e.g. APD-0004" />
+                  </div>
+                  <div class="ble-form-actions">
+                    <button type="submit">Simulate BLE event</button>
+                  </div>
+                </form>
+              </section>
+
+              <section>
+                <div class="panel-header compact">
+                  <h2>BLE events</h2>
+                  <button id="ble-events-refresh" type="button">Refresh</button>
+                </div>
+                <div class="ble-events-filter-row">
+                  <input id="ble-events-filter" type="text" placeholder="Filter by tag, tracking ID, or MAC" autocomplete="off" />
+                  <button id="ble-events-filter-clear" type="button">Clear</button>
+                </div>
+                <div id="ble-events-list" class="ble-events-list"></div>
+              </section>
         </aside>
       </section>
 

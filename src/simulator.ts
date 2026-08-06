@@ -18,6 +18,36 @@ const BASE_UPDATE_INTERVAL_MS = 10_000;
 const DELIVERY_WINDOW_MS = 60 * 60 * 1000;
 const OUT_FOR_DELIVERY_STEPS = 20;
 
+const DEFAULT_SEEDED_BLE: Record<string, {
+  tagId: string;
+  macAddress: string;
+  rssi: number;
+  battery: number;
+  sensors: Record<string, unknown>;
+}> = {
+  "APD-0002": {
+    tagId: "BLE-PT-11A2B3C4",
+    macAddress: "D4:9A:3C:11:A2:B3",
+    rssi: -67,
+    battery: 88,
+    sensors: { temperature_c: 8.1, humidity_pct: 61, shock_g: 0.08 }
+  },
+  "APD-0004": {
+    tagId: "BLE-PT-493A7F12",
+    macAddress: "D4:9A:3C:7F:12:88",
+    rssi: -63,
+    battery: 92,
+    sensors: { temperature_c: 7.4, humidity_pct: 58, shock_g: 0.12 }
+  },
+  "APR-0003": {
+    tagId: "BLE-PT-77C9E220",
+    macAddress: "D4:9A:3C:77:C9:E2",
+    rssi: -70,
+    battery: 81,
+    sensors: { temperature_c: 9.3, humidity_pct: 55, shock_g: 0.05 }
+  }
+};
+
 export class DeliverySimulator extends EventEmitter {
   private trucks: TruckRuntime[] = [];
   private parcels = new Map<string, ParcelRuntime>();
@@ -45,12 +75,32 @@ export class DeliverySimulator extends EventEmitter {
           history: [
             this.createEvent(
               "loaded",
+              new Date(this.startedAt.getTime() - 2 * 60 * 1000),
+              truck.route[0],
+              "Parcel collected from sender."
+            ),
+            this.createEvent(
+              "loaded",
+              new Date(this.startedAt.getTime() - 60 * 1000),
+              truck.route[0],
+              "Parcel arrived at local depot."
+            ),
+            this.createEvent(
+              "loaded",
               this.startedAt,
               truck.route[0],
               `Parcel loaded onto ${truck.name}.`
             )
           ]
         };
+        const seed = DEFAULT_SEEDED_BLE[runtime.trackingId];
+        if (seed) {
+          runtime.ble = {
+            ...seed,
+            timestamp: this.startedAt.toISOString(),
+            raw: { source: "sim-seed" }
+          };
+        }
         this.parcels.set(parcel.trackingId, runtime);
       }
     }
@@ -83,38 +133,59 @@ export class DeliverySimulator extends EventEmitter {
   }
 
   getTracking(trackingId: string): TrackingResponse | undefined {
-    const parcel = this.parcels.get(trackingId);
-    if (!parcel) {
-      return undefined;
-    }
+     const parcel = this.parcels.get(trackingId);
+     if (!parcel) {
+       return undefined;
+     }
 
-    if (parcel.status === "delivered") {
-      return {
-        trackingId: parcel.trackingId,
-        status: "delivered",
-        deliveredAt: parcel.deliveredAt ?? parcel.history.at(-1)?.timestamp ?? this.startedAt.toISOString(),
-        history: parcel.history
-      };
-    }
+     const truck = this.requireTruck(parcel.truckId);
+     const deliveryStopNumber = this.getDeliveryStopNumber(parcel, truck);
+     const deliveryTotalStops = truck.parcels.length;
 
-    const truck = this.requireTruck(parcel.truckId);
-    const currentLocation = truck.route[truck.currentRouteIndex];
-    const remainingRouteSteps = Math.max(parcel.deliveryRouteIndex - truck.currentRouteIndex, 0);
-    const etaFrom = new Date(Date.now() + remainingRouteSteps * this.getTickMs());
+     const truckParcels = truck.parcels.map((p, index) => ({
+       trackingId: p.trackingId,
+       destination: { lat: p.destination.lat, lng: p.destination.lng },
+       deliveryStopNumber: index + 1
+     }));
 
-    return {
-      trackingId: parcel.trackingId,
-      status: parcel.status,
-      currentLocation,
-      estimatedDeliveryWindow: {
-        from: etaFrom.toISOString(),
-        to: new Date(etaFrom.getTime() + DELIVERY_WINDOW_MS).toISOString()
-      },
-      scheduledDeliveriesBeforeYours: this.countPendingDeliveriesBefore(parcel, truck),
-      truck: this.snapshotTruck(truck),
-      history: parcel.history
-    };
-  }
+     if (parcel.status === "delivered") {
+       return {
+         trackingId: parcel.trackingId,
+         recipient: parcel.recipient,
+         destination: parcel.destination,
+         status: "delivered",
+         deliveredAt: parcel.deliveredAt ?? parcel.history.at(-1)?.timestamp ?? this.startedAt.toISOString(),
+         deliveryStopNumber,
+         deliveryTotalStops,
+         truckParcels,
+         history: parcel.history,
+         ble: parcel.ble
+       };
+     }
+
+     const currentLocation = truck.route[truck.currentRouteIndex];
+     const remainingRouteSteps = Math.max(parcel.deliveryRouteIndex - truck.currentRouteIndex, 0);
+     const etaFrom = new Date(Date.now() + remainingRouteSteps * this.getTickMs());
+
+     return {
+       trackingId: parcel.trackingId,
+       recipient: parcel.recipient,
+       destination: parcel.destination,
+       status: parcel.status,
+       currentLocation,
+       estimatedDeliveryWindow: {
+         from: etaFrom.toISOString(),
+         to: new Date(etaFrom.getTime() + DELIVERY_WINDOW_MS).toISOString()
+       },
+       scheduledDeliveriesBeforeYours: this.countPendingDeliveriesBefore(parcel, truck),
+       deliveryStopNumber,
+       deliveryTotalStops,
+       truck: this.snapshotTruck(truck),
+       truckParcels,
+       history: parcel.history,
+       ble: parcel.ble
+     };
+   }
 
   tick() {
     for (const truck of this.trucks) {
@@ -156,7 +227,7 @@ export class DeliverySimulator extends EventEmitter {
             truck.route[truck.currentRouteIndex],
             nextStatus === "out_for_delivery"
               ? "Your parcel is on its way to you."
-              : `Parcel is moving through ${truck.route[truck.currentRouteIndex].city}.`
+              : "Delivery run started."
           )
         );
         this.emitTracking(parcel.trackingId);
@@ -186,6 +257,17 @@ export class DeliverySimulator extends EventEmitter {
     };
   }
 
+  private getDeliveryStopNumber(parcel: ParcelRuntime, truck: TruckRuntime) {
+    const orderedStops = [...truck.parcels].sort((a, b) => {
+      if (a.deliveryRouteIndex !== b.deliveryRouteIndex) {
+        return a.deliveryRouteIndex - b.deliveryRouteIndex;
+      }
+      return a.trackingId.localeCompare(b.trackingId);
+    });
+    const index = orderedStops.findIndex((candidate) => candidate.trackingId === parcel.trackingId);
+    return index >= 0 ? index + 1 : 1;
+  }
+
   private createEvent(
     status: ParcelEvent["status"],
     timestamp: Date,
@@ -210,6 +292,19 @@ export class DeliverySimulator extends EventEmitter {
 
   private emitTracking(trackingId: string) {
     this.emit("tracking", trackingId, this.getTracking(trackingId));
+  }
+
+  /**
+   * Attach or update BLE data for a parcel identified by trackingId.
+   * Returns true when the parcel was found and updated, false otherwise.
+   */
+  upsertBle(trackingId: string, ble: unknown): boolean {
+    const parcel = this.parcels.get(trackingId);
+    if (!parcel) return false;
+    // attach BLE data to the runtime parcel
+    (parcel as any).ble = ble as any;
+    this.emitTracking(trackingId);
+    return true;
   }
 
   private startTimer() {
