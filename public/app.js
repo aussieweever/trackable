@@ -891,7 +891,7 @@ function createFireworks() {
 
   const colors = ["color-1", "color-2", "color-3", "color-4", "color-5", "color-6"];
   const particleCount = 50;
-  const duration = 0.8;
+  const duration = 0.6; // Quick burst: 0.6 seconds
 
   for (let i = 0; i < particleCount; i++) {
     const particle = document.createElement("div");
@@ -906,14 +906,14 @@ function createFireworks() {
     particle.style.top = "50%";
     particle.style.setProperty("--tx", `${tx}px`);
     particle.style.setProperty("--ty", `${ty}px`);
-    particle.style.animationDelay = `${Math.random() * 0.2}s`;
+    particle.style.animationDelay = `${Math.random() * 0.1}s`; // Shorter delay spread
     
     container.appendChild(particle);
   }
 
   setTimeout(() => {
     container.remove();
-  }, (duration + 0.2) * 1000);
+  }, (duration + 0.1) * 1000); // Total ~0.7 seconds
 }
 
 await loadSimulation();
