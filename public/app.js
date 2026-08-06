@@ -54,6 +54,7 @@ let initialDeliveriesBeforeYours = null;
 let bleEventsFilterValue = "";
 let privacyModeEnabled = false;
 let currentTrackingData = null;
+let deliveryFireworksShown = false;
 
 initMap();
 
@@ -97,6 +98,7 @@ async function track(rawTrackingId) {
 
   currentTrackingId = trackingId;
   initialDeliveriesBeforeYours = null;
+  deliveryFireworksShown = false; // Reset fireworks flag for new tracking
   trackingInput.value = trackingId;
   headerTrackingId.textContent = trackingId;
   await fetchTracking(trackingId);
@@ -262,8 +264,11 @@ function renderTracking(data) {
       : false;
 
   if (data.status === "delivered") {
-    // Trigger celebration animation
-    createFireworks();
+    // Trigger celebration animation only once
+    if (!deliveryFireworksShown) {
+      createFireworks();
+      deliveryFireworksShown = true;
+    }
     
     summaryGrid.innerHTML = [
       summaryItem("Status", "Delivered"),
