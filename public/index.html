@@ -132,6 +132,76 @@
             <h2>Available IDs</h2>
             <div id="parcel-list" class="parcel-list"></div>
           </section>
+
+              <section>
+                <h2>BLE Monitor</h2>
+                <div id="ble-panel" class="ble-panel">No BLE data</div>
+              </section>
+
+              <section>
+                <h2>BLE mappings</h2>
+                <form id="ble-map-form" class="ble-form">
+                  <div class="ble-form-row">
+                    <label for="map-tag">Tag ID</label>
+                    <input id="map-tag" name="tagId" placeholder="e.g. TAG-1234" />
+                  </div>
+                  <div class="ble-form-row">
+                    <label for="map-mac">MAC address</label>
+                    <input id="map-mac" name="macAddress" placeholder="e.g. AA:BB:CC:DD:EE:FF" />
+                  </div>
+                  <div class="ble-form-row">
+                    <label for="map-tracking">Tracking ID</label>
+                    <input id="map-tracking" name="trackingId" placeholder="e.g. APD-0004" />
+                  </div>
+                  <div class="ble-form-actions">
+                    <button type="submit">Add / Update mapping</button>
+                    <button id="ble-map-refresh" type="button">Refresh</button>
+                  </div>
+                </form>
+
+                <div id="mapping-list" class="mapping-list"></div>
+              </section>
+
+              <section>
+                <h2>Simulate BLE event</h2>
+                <form id="ble-sim-form" class="ble-form">
+                  <div class="ble-form-row">
+                    <label for="sim-tag">Tag ID</label>
+                    <input id="sim-tag" name="tagId" placeholder="e.g. TAG-1234" />
+                  </div>
+                  <div class="ble-form-row">
+                    <label for="sim-mac">MAC address</label>
+                    <input id="sim-mac" name="macAddress" placeholder="e.g. AA:BB:CC:DD:EE:FF" />
+                  </div>
+                  <div class="ble-form-row">
+                    <label for="sim-rssi">RSSI</label>
+                    <input id="sim-rssi" name="rssi" placeholder="e.g. -60" />
+                  </div>
+                  <div class="ble-form-row">
+                    <label for="sim-batt">Battery %</label>
+                    <input id="sim-batt" name="battery" placeholder="e.g. 86" />
+                  </div>
+                  <div class="ble-form-row">
+                    <label for="sim-tracking">Attach to Tracking ID (optional)</label>
+                    <input id="sim-tracking" name="trackingId" placeholder="e.g. APD-0004" />
+                  </div>
+                  <div class="ble-form-actions">
+                    <button type="submit">Simulate BLE event</button>
+                  </div>
+                </form>
+              </section>
+
+              <section>
+                <div class="panel-header compact">
+                  <h2>BLE events</h2>
+                  <button id="ble-events-refresh" type="button">Refresh</button>
+                </div>
+                <div class="ble-events-filter-row">
+                  <input id="ble-events-filter" type="text" placeholder="Filter by tag, tracking ID, or MAC" autocomplete="off" />
+                  <button id="ble-events-filter-clear" type="button">Clear</button>
+                </div>
+                <div id="ble-events-list" class="ble-events-list"></div>
+              </section>
         </aside>
       </section>
 

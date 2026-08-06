@@ -23,10 +23,26 @@ export type TruckDefinition = {
 };
 
 export type ParcelEvent = {
-  status: "loaded" | "in_transit" | "out_for_delivery" | "delivered";
+  status: "loaded" | "in_transit" | "out_for_delivery" | "arriving_soon" | "delivered";
   timestamp: string;
   location: RoutePoint;
   description: string;
+};
+
+export type BLEEvent = {
+  tagId: string;
+  timestamp?: string;
+  rssi?: number;
+  battery?: number;
+  sensors?: Record<string, any>;
+  macAddress?: string;
+  gps?: {
+    lat: number;
+    lng: number;
+    label?: string;
+    city?: string;
+  };
+  raw?: unknown;
 };
 
 export type ParcelRuntime = ParcelDefinition & {
@@ -34,6 +50,8 @@ export type ParcelRuntime = ParcelDefinition & {
   status: "loaded" | "in_transit" | "out_for_delivery" | "delivered";
   deliveredAt?: string;
   history: ParcelEvent[];
+  // optional BLE device data attached at runtime
+  ble?: BLEEvent;
 };
 
 export type TruckSnapshot = {
@@ -58,6 +76,7 @@ export type ActiveTrackingResponse = {
   scheduledDeliveriesBeforeYours: number;
   truck: TruckSnapshot;
   history: ParcelEvent[];
+  ble?: BLEEvent;
 };
 
 export type DeliveredTrackingResponse = {
@@ -67,6 +86,7 @@ export type DeliveredTrackingResponse = {
   status: "delivered";
   deliveredAt: string;
   history: ParcelEvent[];
+  ble?: BLEEvent;
 };
 
 export type TrackingResponse = ActiveTrackingResponse | DeliveredTrackingResponse;
