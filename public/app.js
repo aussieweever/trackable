@@ -307,27 +307,28 @@ function renderBleEvents(events) {
     return;
   }
 
-  const latestRows = latestEvents.map((event) => {
-    const ts = event.timestamp ? formatDateTime(event.timestamp) : 'Unknown time';
-    const source = event.source || 'ingest';
-    const tracking = event.trackingId ?? 'Unassigned';
-    const tag = event.tagId ?? 'N/A';
-    const mac = event.macAddress ?? 'N/A';
-    const rssi = typeof event.rssi === 'number' ? event.rssi : 'N/A';
-    const battery = typeof event.battery === 'number' ? `${event.battery}%` : 'N/A';
-    const gps = event.gps ? `${event.gps.label || 'Route point'} (${event.gps.lat}, ${event.gps.lng})` : 'N/A';
-    return `
-      <button class="ble-event-item ble-event-open" type="button" data-tag-id="${escapeHtml(tag)}" title="View full event history for ${escapeHtml(tag)}">
-        <div class="ble-event-top"><strong>${escapeHtml(tracking)}</strong><span>${escapeHtml(ts)}</span></div>
-        <div class="ble-event-row"><span>Tag</span><code>${escapeHtml(tag)}</code></div>
-        <div class="ble-event-row"><span>MAC</span><code>${escapeHtml(mac)}</code></div>
-        <div class="ble-event-row"><span>RSSI</span><span>${escapeHtml(rssi)}</span></div>
-        <div class="ble-event-row"><span>Battery</span><span>${escapeHtml(battery)}</span></div>
-        <div class="ble-event-row"><span>GPS</span><span>${escapeHtml(gps)}</span></div>
-        <div class="ble-event-source">Source: ${escapeHtml(source)} · Click for full history</div>
-      </button>
-    `;
-  }).join('');
+   const latestRows = latestEvents.map((event) => {
+     const ts = event.timestamp ? formatDateTime(event.timestamp) : 'Unknown time';
+     const source = event.source || 'ingest';
+     const tracking = event.trackingId ?? 'Unassigned';
+     const tag = event.tagId ?? 'N/A';
+     const mac = event.macAddress ?? 'N/A';
+     const rssi = typeof event.rssi === 'number' ? event.rssi : 'N/A';
+     const battery = typeof event.battery === 'number' ? `${event.battery}%` : 'N/A';
+     const gps = event.gps ? `${event.gps.label || 'Route point'} (${event.gps.lat}, ${event.gps.lng})` : 'N/A';
+     const runClass = trackingRunClass(tracking);
+     return `
+       <button class="ble-event-item ble-event-open ${runClass}" type="button" data-tag-id="${escapeHtml(tag)}" title="View full event history for ${escapeHtml(tag)}">
+         <div class="ble-event-top"><strong>${escapeHtml(tracking)}</strong><span>${escapeHtml(ts)}</span></div>
+         <div class="ble-event-row"><span>Tag</span><code>${escapeHtml(tag)}</code></div>
+         <div class="ble-event-row"><span>MAC</span><code>${escapeHtml(mac)}</code></div>
+         <div class="ble-event-row"><span>RSSI</span><span>${escapeHtml(rssi)}</span></div>
+         <div class="ble-event-row"><span>Battery</span><span>${escapeHtml(battery)}</span></div>
+         <div class="ble-event-row"><span>GPS</span><span>${escapeHtml(gps)}</span></div>
+         <div class="ble-event-source">Source: ${escapeHtml(source)} · Click for full history</div>
+       </button>
+     `;
+   }).join('');
 
   bleEventsList.innerHTML = detailBlock + latestRows;
 
@@ -578,7 +579,7 @@ function renderRouteStats({ beforeYours, deliveryStopNumber, delivered }) {
 
 function renderFleet(trucks) {
   fleetList.innerHTML = trucks.map((truck) => `
-    <div class="fleet-item">
+    <div class="fleet-item ${fleetRunClass(truck)}">
       <strong>${escapeHtml(truck.name)}</strong>
       <span>${escapeHtml(truck.currentLocation.label)}, ${escapeHtml(truck.currentLocation.city)}</span>
       <span>Route point ${truck.currentRouteIndex + 1} of ${truck.routeLength} (path points)</span>
@@ -586,14 +587,29 @@ function renderFleet(trucks) {
   `).join("");
 }
 
+function fleetRunClass(truck) {
+  const id = String(truck?.id || '').toLowerCase();
+  const name = String(truck?.name || '').toLowerCase();
+  if (id.includes('docklands') || name.includes('docklands')) return 'run-docklands';
+  if (id.includes('richmond') || name.includes('richmond')) return 'run-richmond';
+  return 'run-unknown';
+}
+
 function renderParcelIds(parcelIds) {
   parcelList.innerHTML = parcelIds.map((parcelId) => `
-    <button class="parcel-token" type="button" data-tracking-id="${escapeHtml(parcelId)}">${escapeHtml(parcelId)}</button>
+    <button class="parcel-token ${trackingRunClass(parcelId)}" type="button" data-tracking-id="${escapeHtml(parcelId)}">${escapeHtml(parcelId)}</button>
   `).join("");
 
   parcelList.querySelectorAll("button").forEach((button) => {
     button.addEventListener("click", () => track(button.dataset.trackingId));
   });
+}
+
+function trackingRunClass(trackingId) {
+  const upper = String(trackingId || '').toUpperCase();
+  if (upper.startsWith('APD-')) return 'run-docklands';
+  if (upper.startsWith('APR-')) return 'run-richmond';
+  return 'run-unknown';
 }
 
 function renderHistory(history) {

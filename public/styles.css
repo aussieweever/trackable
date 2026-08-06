@@ -524,6 +524,16 @@ input {
   background: #fafbf8;
 }
 
+.fleet-item.run-docklands {
+  border-color: #9ec5f8;
+  background: #edf5ff;
+}
+
+.fleet-item.run-richmond {
+  border-color: #f3b5ba;
+  background: #fff1f2;
+}
+
 .fleet-item strong,
 .fleet-item span {
   display: block;
@@ -541,6 +551,10 @@ input {
   gap: 8px;
 }
 
+.side-panel .parcel-list {
+  margin-top: 10px;
+}
+
 .parcel-token {
   min-height: 34px;
   border: 1px solid var(--line);
@@ -551,6 +565,24 @@ input {
   font-size: 0.82rem;
   font-weight: 900;
   cursor: pointer;
+}
+
+.parcel-token.run-docklands {
+  border-color: #9ec5f8;
+  background: #edf5ff;
+  color: #184f9b;
+}
+
+.parcel-token.run-richmond {
+  border-color: #f3b5ba;
+  background: #fff1f2;
+  color: #8f1f2c;
+}
+
+.parcel-token.run-unknown {
+  border-color: var(--line);
+  background: #fff;
+  color: #39443b;
 }
 
 .history-section {
@@ -625,8 +657,12 @@ input {
 .ble-events-filter-row input { min-height: 34px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; text-transform: none; font-weight: 600; }
 .ble-events-filter-row button { min-height: 34px; padding: 0 10px; }
 .ble-event-item { border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 8px; display: grid; gap: 6px; width: 100%; text-align: left; }
+.ble-event-item.run-docklands { border-color: #9ec5f8; background: #edf5ff; }
+.ble-event-item.run-richmond { border-color: #f3b5ba; background: #fff1f2; }
 .ble-event-open { cursor: pointer; }
 .ble-event-open:hover { border-color: #8fa89c; background: #fbfcfa; }
+.ble-event-item.run-docklands:hover { border-color: #7eb0e8; }
+.ble-event-item.run-richmond:hover { border-color: #e89aa2; }
 .ble-event-top { display: flex; justify-content: space-between; gap: 8px; font-size: 0.82rem; color: var(--muted); }
 .ble-event-row { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
 .ble-event-row span:first-child { color: var(--muted); font-size: 0.8rem; font-weight: 700; }
