@@ -441,10 +441,23 @@ input {
   margin-bottom: 10px;
   color: var(--muted);
   font-size: 0.86rem;
+  padding: 10px 12px;
+  border-radius: 6px;
+  transition: background-color 200ms ease;
 }
 
 .map-caption strong {
   color: var(--ink);
+}
+
+.map-caption.tracking-hidden {
+  background: #fffef0;
+  border: 1px solid #f5f1c4;
+}
+
+.map-caption.tracking-visible {
+  background: #e8f7ea;
+  border: 1px solid #8ccf98;
 }
 
 .privacy-toggle-label {
@@ -473,18 +486,6 @@ input {
   border: 1px solid #cad4c9;
   border-radius: 8px;
   background: #d8e5df;
-  transition: background-color 200ms ease, opacity 200ms ease;
-}
-
-.map-canvas.map-canvas-hidden {
-  background: #e6f0ec;
-  opacity: 0.6;
-}
-
-.map-canvas.map-canvas-visible {
-  background: #e8f7ea;
-  border-color: #8ccf98;
-  opacity: 1;
 }
 
 .map-canvas.arriving-soon {
@@ -492,10 +493,6 @@ input {
   border-color: #8ccf98;
 }
 
-.map-canvas.arriving-soon.map-canvas-hidden {
-  background: #e6f0ec;
-  border-color: #b8d5c4;
-}
 
 .leaflet-container {
   font-family: inherit;

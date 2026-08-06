@@ -42,6 +42,7 @@ const refreshButton = document.querySelector("#refresh-button");
 const connectionStatus = document.querySelector("#connection-status");
 const privacyModeToggle = document.querySelector("#privacy-mode-toggle");
 const mapCanvas = document.querySelector("#map");
+const mapCaption = document.querySelector(".map-caption");
 let bleEventsCache = [];
 let selectedBleTagId = null;
 
@@ -215,16 +216,20 @@ function shouldShowMapTracking(trackingData) {
 function updateMapVisibility(trackingData) {
   const shouldShow = shouldShowMapTracking(trackingData);
   
-  if (mapCanvas) {
+  // Remove any existing color classes from caption
+  mapCaption.classList.remove("tracking-hidden", "tracking-visible");
+  
+  // Only apply colors when privacy mode is OFF
+  if (!privacyModeEnabled) {
     if (shouldShow) {
-      mapCanvas.classList.remove("map-canvas-hidden");
-      mapCanvas.classList.add("map-canvas-visible");
-      if (map) map.invalidateSize();
+      // Close to delivery: green
+      mapCaption.classList.add("tracking-visible");
     } else {
-      mapCanvas.classList.remove("map-canvas-visible");
-      mapCanvas.classList.add("map-canvas-hidden");
+      // Far from delivery: yellow
+      mapCaption.classList.add("tracking-hidden");
     }
   }
+  // When privacy mode is ON, caption stays white (no classes)
 }
 
 async function loadSimulation() {
