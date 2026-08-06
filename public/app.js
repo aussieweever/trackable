@@ -262,6 +262,9 @@ function renderTracking(data) {
       : false;
 
   if (data.status === "delivered") {
+    // Trigger celebration animation
+    createFireworks();
+    
     summaryGrid.innerHTML = [
       summaryItem("Status", "Delivered"),
       summaryItem("Delivered at", formatDateTime(data.deliveredAt)),
@@ -878,6 +881,39 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+// -- Fireworks celebration animation --
+function createFireworks() {
+  const container = document.createElement("div");
+  container.className = "fireworks-container";
+  document.body.appendChild(container);
+
+  const colors = ["color-1", "color-2", "color-3", "color-4", "color-5", "color-6"];
+  const particleCount = 50;
+  const duration = 0.8;
+
+  for (let i = 0; i < particleCount; i++) {
+    const particle = document.createElement("div");
+    particle.className = `firework-particle ${colors[Math.floor(Math.random() * colors.length)]}`;
+    
+    const angle = (Math.PI * 2 * i) / particleCount;
+    const velocity = 100 + Math.random() * 150;
+    const tx = Math.cos(angle) * velocity;
+    const ty = Math.sin(angle) * velocity - 50; // Bias upward
+    
+    particle.style.left = "50%";
+    particle.style.top = "50%";
+    particle.style.setProperty("--tx", `${tx}px`);
+    particle.style.setProperty("--ty", `${ty}px`);
+    particle.style.animationDelay = `${Math.random() * 0.2}s`;
+    
+    container.appendChild(particle);
+  }
+
+  setTimeout(() => {
+    container.remove();
+  }, (duration + 0.2) * 1000);
 }
 
 await loadSimulation();
