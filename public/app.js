@@ -204,28 +204,26 @@ function calculateRevealDistance(trackingData) {
 }
 
 function shouldShowMapTracking(trackingData) {
-  if (!privacyModeEnabled) return true;
   if (trackingData.status === "delivered") return true;
+  if (privacyModeEnabled) return false;
   
-  const revealDistance = calculateRevealDistance(trackingData);
+  // When privacy mode is OFF, return true only if 2 stops away or closer
   const stopsBeforeDelivery = trackingData.scheduledDeliveriesBeforeYours || 0;
-  
-  return stopsBeforeDelivery <= revealDistance;
+  return stopsBeforeDelivery <= 2;
 }
 
 function updateMapVisibility(trackingData) {
-  const shouldShow = shouldShowMapTracking(trackingData);
-  
   // Remove any existing color classes from caption
   mapCaption.classList.remove("tracking-hidden", "tracking-visible");
   
   // Only apply colors when privacy mode is OFF
   if (!privacyModeEnabled) {
+    const shouldShow = shouldShowMapTracking(trackingData);
     if (shouldShow) {
-      // Close to delivery: green
+      // Close to delivery (2 stops or less): green
       mapCaption.classList.add("tracking-visible");
     } else {
-      // Far from delivery: yellow
+      // Far from delivery (more than 2 stops): yellow
       mapCaption.classList.add("tracking-hidden");
     }
   }
