@@ -68,6 +68,11 @@ privacyModeToggle.addEventListener("change", () => {
   }
 });
 
+speedSelect.addEventListener("change", async () => {
+  await postJson("/api/simulation/speed", { multiplier: Number(speedSelect.value) });
+  await loadSimulation();
+});
+
 restartButton.addEventListener("click", async () => {
   await postJson("/api/simulation/restart", {});
   await loadSimulation();
